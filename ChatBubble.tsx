@@ -92,6 +92,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   const [position, setPosition] = useState<ChatPosition>(defaultPosition);
   const [isSwitchingSide, setIsSwitchingSide] = useState(false);
   const sideSwitchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const viewModeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isViewModeChanging, setIsViewModeChanging] = useState(false);
   const sideOpenTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [viewMode, setViewMode] = useState<ChatViewMode>(variant === "page" ? "page" : "drawer");
   const [inputValue, setInputValue] = useState("");
@@ -117,6 +119,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   useEffect(() => () => {
     if (sideSwitchTimer.current) {
       clearTimeout(sideSwitchTimer.current);
+    }
+    if (viewModeTimer.current) {
+      clearTimeout(viewModeTimer.current);
     }
     if (sideOpenTimer.current) {
       clearTimeout(sideOpenTimer.current);
@@ -240,10 +245,20 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   };
 
   const toggleViewMode = () => {
-    setViewMode((current) => (current === "drawer" ? "page" : "drawer"));
+    selectViewMode(viewMode === "drawer" ? "page" : "drawer");
   };
 
   const selectViewMode = (mode: ChatViewMode) => {
+    if (mode !== viewMode) {
+      setIsViewModeChanging(true);
+      if (viewModeTimer.current) {
+        clearTimeout(viewModeTimer.current);
+      }
+      viewModeTimer.current = setTimeout(() => {
+        setIsViewModeChanging(false);
+        viewModeTimer.current = null;
+      }, 480);
+    }
     setViewMode(mode);
     closeMenus();
   };
@@ -274,7 +289,19 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             overflow: "hidden",
             bgcolor: "#ffffff",
             m: 0,
-            transition: "width 320ms cubic-bezier(0.22, 1, 0.36, 1), max-width 320ms cubic-bezier(0.22, 1, 0.36, 1)",
+            willChange: "width, max-width",
+            transition: "width 480ms cubic-bezier(0.22, 1, 0.36, 1), max-width 480ms cubic-bezier(0.22, 1, 0.36, 1)",
+            animation: isViewModeChanging
+              ? `${isFullPage ? "drawerExpandToPage" : "drawerCollapseToDrawer"} 480ms cubic-bezier(0.22, 1, 0.36, 1) both`
+              : "none",
+            "@keyframes drawerExpandToPage": {
+              from: { width: "450px", maxWidth: "450px" },
+              to: { width: "100vw", maxWidth: "100vw" },
+            },
+            "@keyframes drawerCollapseToDrawer": {
+              from: { width: "100vw", maxWidth: "100vw" },
+              to: { width: "450px", maxWidth: "450px" },
+            },
           },
         },
         backdrop: {
