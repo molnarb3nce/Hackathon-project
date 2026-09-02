@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from "react";
+import React, { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -65,6 +65,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(isOpen);
   const [position, setPosition] = useState<ChatPosition>(defaultPosition);
+  const [isSwitchingSide, setIsSwitchingSide] = useState(false);
+  const sideSwitchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sideEntryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isEnteringFromSide, setIsEnteringFromSide] = useState(false);
   const [viewMode, setViewMode] = useState<ChatViewMode>(variant === "page" ? "page" : "drawer");
   const [inputValue, setInputValue] = useState("");
   const [showMoreRecommendations, setShowMoreRecommendations] = useState(false);
@@ -84,6 +88,15 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   useEffect(() => {
     setViewMode(variant === "page" ? "page" : "drawer");
   }, [variant]);
+
+  useEffect(() => () => {
+    if (sideSwitchTimer.current) {
+      clearTimeout(sideSwitchTimer.current);
+    }
+    if (sideEntryTimer.current) {
+      clearTimeout(sideEntryTimer.current);
+    }
+  }, []);
 
   const handleClose = () => {
     setDrawerOpen(false);
@@ -162,7 +175,23 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   }, [pendingResponse]);
 
   const togglePosition = () => {
-    setPosition((current) => (current === "right" ? "left" : "right"));
+    if (isSwitchingSide) {
+      return;
+    }
+
+    setIsSwitchingSide(true);
+    setDrawerOpen(false);
+    sideSwitchTimer.current = setTimeout(() => {
+      setPosition((current) => (current === "right" ? "left" : "right"));
+      setIsEnteringFromSide(true);
+      setDrawerOpen(true);
+      setIsSwitchingSide(false);
+      sideSwitchTimer.current = null;
+      sideEntryTimer.current = setTimeout(() => {
+        setIsEnteringFromSide(false);
+        sideEntryTimer.current = null;
+      }, 360);
+    }, 240);
   };
 
   const toggleViewMode = () => {
@@ -184,7 +213,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
       open={drawerOpen}
       onClose={handleClose}
       ModalProps={{ keepMounted: true }}
-      transitionDuration={{ enter: 320, exit: 240 }}
+      transitionDuration={{ enter: 360, exit: 240 }}
       slotProps={{
         paper: {
           sx: {
@@ -199,6 +228,18 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             overflow: "hidden",
             bgcolor: "#ffffff",
             m: 0,
+            transition: "width 320ms cubic-bezier(0.22, 1, 0.36, 1), max-width 320ms cubic-bezier(0.22, 1, 0.36, 1)",
+            animation: isEnteringFromSide
+              ? `${position === "right" ? "drawerEnterFromRight" : "drawerEnterFromLeft"} 360ms cubic-bezier(0.22, 1, 0.36, 1) both`
+              : "none",
+            "@keyframes drawerEnterFromRight": {
+              from: { transform: "translateX(100%)" },
+              to: { transform: "translateX(0)" },
+            },
+            "@keyframes drawerEnterFromLeft": {
+              from: { transform: "translateX(-100%)" },
+              to: { transform: "translateX(0)" },
+            },
           },
         },
         backdrop: {
@@ -240,12 +281,16 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             <IconButton
               size="small"
               onClick={togglePosition}
+              disabled={isFullPage || isSwitchingSide}
               aria-label="Toggle chat side"
               sx={{
                 color: "#8591a6",
                 width: 34,
                 height: 34,
                 borderRadius: 1,
+                "&.Mui-disabled": {
+                  color: "#c4cad4",
+                },
               }}
             >
               <ViewSidebarIcon fontSize="small" />
