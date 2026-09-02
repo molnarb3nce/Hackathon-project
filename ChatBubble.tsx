@@ -106,6 +106,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   const [showLoadingStatus, setShowLoadingStatus] = useState(false);
   const [loadingLabel, setLoadingLabel] = useState("Thinking");
   const [starPositions, setStarPositions] = useState<StarPosition[]>(getRandomStarPositions);
+  const [questionToScrollId, setQuestionToScrollId] = useState<number | null>(null);
+  const questionToScrollRef = useRef<HTMLDivElement | null>(null);
+  const messageAreaRef = useRef<HTMLDivElement | null>(null);
 
   const isFullPage = viewMode === "page";
 
@@ -150,6 +153,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     };
 
     setMessages((current) => [...current, userMessage]);
+    setQuestionToScrollId(messageId);
     setPendingResponse(reply);
     setLoadingLabel("Thinking");
     setShowLoadingStatus(true);
@@ -226,6 +230,22 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
       }
     };
   }, [isLoading]);
+
+  useEffect(() => {
+    if (questionToScrollId === null || !questionToScrollRef.current) {
+      return;
+    }
+
+    questionToScrollRef.current.scrollIntoView({ block: "start", behavior: "auto" });
+  }, [questionToScrollId]);
+
+  useEffect(() => {
+    if (!messageAreaRef.current) {
+      return;
+    }
+
+    messageAreaRef.current.scrollTop = messageAreaRef.current.scrollHeight;
+  }, [isLoading, messages, showLoadingStatus]);
 
   const togglePosition = () => {
     if (isSwitchingSide) {
@@ -372,6 +392,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
           ))}
         </Box>
         <Box
+          ref={messageAreaRef}
           sx={{
             display: "flex",
             alignItems: "center",
@@ -538,6 +559,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               {messages.map((message) => (
                 <Box
                   key={message.id}
+                  ref={message.id === questionToScrollId ? questionToScrollRef : undefined}
                   sx={{
                     display: "flex",
                     justifyContent: message.isUser ? "flex-end" : "flex-start",
