@@ -12,8 +12,11 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import SendIcon from "@mui/icons-material/Send";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import MenuIcon from "@mui/icons-material/Menu";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
 
 type ChatPosition = "right" | "left";
@@ -30,10 +33,15 @@ interface ChatBubbleProps {
 }
 
 const defaultRecommendations = [
-  "Draft a product update",
-  "Design a cleaner onboarding flow",
-  "Summarize my meeting notes",
-  "Generate customer responses",
+  "Show me unusual behaviors",
+  "What rules triggered the most this week",
+  "Suggest improvements to reduce false positives",
+];
+
+const additionalRecommendations = [
+  "Summarize the latest transaction activity",
+  "Find related transactions",
+  "Explain this transaction",
 ];
 
 const demoResponses = [
@@ -50,7 +58,7 @@ const wordIntervalMs = 75;
 export const ChatBubble: React.FC<ChatBubbleProps> = ({
   isOpen = true,
   onClose,
-  title = "AI Chat",
+  title = "Ai chat",
   recommendations = defaultRecommendations,
   defaultPosition = "right",
   variant = "drawer",
@@ -59,6 +67,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   const [position, setPosition] = useState<ChatPosition>(defaultPosition);
   const [viewMode, setViewMode] = useState<ChatViewMode>(variant === "page" ? "page" : "drawer");
   const [inputValue, setInputValue] = useState("");
+  const [showMoreRecommendations, setShowMoreRecommendations] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(null);
   const [pendingResponse, setPendingResponse] = useState<null | { id: number; text: string }>(null);
@@ -179,8 +188,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
       slotProps={{
         paper: {
           sx: {
-            width: isFullPage ? "100vw" : { xs: "100vw", sm: 420 },
-            maxWidth: isFullPage ? "100vw" : 420,
+            width: isFullPage ? "100vw" : { xs: "100vw", sm: 450 },
+            maxWidth: isFullPage ? "100vw" : 450,
             height: "100vh",
             top: 0,
             bottom: 0,
@@ -188,7 +197,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             boxShadow: "none",
             border: "none",
             overflow: "hidden",
-            bgcolor: "#f8fafc",
+            bgcolor: "#ffffff",
             m: 0,
           },
         },
@@ -215,27 +224,16 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            px: 2,
-            py: 1.5,
-            borderBottom: "1px solid rgba(15, 23, 42, 0.06)",
+            px: 3,
+            py: 2.25,
             bgcolor: "#ffffff",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box
-              sx={{
-                px: 1.2,
-                py: 0.7,
-                borderRadius: 1.5,
-                bgcolor: "#dbeafe",
-                color: "#0f172a",
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: 0.2,
-              }}
-            >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <MenuIcon sx={{ color: "#8591a6", fontSize: 22 }} />
+            <Typography sx={{ color: "#202833", fontSize: 18, fontWeight: 600, letterSpacing: "-0.02em" }}>
               {title}
-            </Box>
+            </Typography>
           </Box>
 
           <Stack direction="row" spacing={0.8} sx={{ alignItems: "center" }}>
@@ -244,12 +242,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               onClick={togglePosition}
               aria-label="Toggle chat side"
               sx={{
-                border: "1px solid rgba(15, 23, 42, 0.08)",
-                backgroundColor: "#ffffff",
-                color: "#0f172a",
+                color: "#8591a6",
                 width: 34,
                 height: 34,
-                borderRadius: 1.5,
+                borderRadius: 1,
               }}
             >
               <ViewSidebarIcon fontSize="small" />
@@ -259,15 +255,13 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               onClick={(event) => setMoreMenuAnchor(event.currentTarget)}
               aria-label="More options"
               sx={{
-                border: "1px solid rgba(15, 23, 42, 0.08)",
-                backgroundColor: "#ffffff",
-                color: "#0f172a",
+                color: "#8591a6",
                 width: 34,
                 height: 34,
-                borderRadius: 1.5,
+                borderRadius: 1,
               }}
             >
-              <MoreVertIcon fontSize="small" />
+                <MoreHorizIcon fontSize="small" />
             </IconButton>
             <Menu
               anchorEl={moreMenuAnchor}
@@ -288,12 +282,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               onClick={handleClose}
               aria-label="Close chat"
               sx={{
-                border: "1px solid rgba(15, 23, 42, 0.08)",
-                backgroundColor: "#ffffff",
-                color: "#0f172a",
+                color: "#8591a6",
                 width: 34,
                 height: 34,
-                borderRadius: 1.5,
+                borderRadius: 1,
               }}
             >
               <CloseIcon fontSize="small" />
@@ -304,14 +296,15 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         <Box
           sx={{
             flex: 1,
-            px: 2,
-            pt: 2.5,
+            px: 3,
+            pt: 2,
             pb: 1.5,
             bgcolor: "#ffffff",
             display: "flex",
             flexDirection: "column",
-            gap: 2,
+            gap: 1.25,
             overflow: "auto",
+            justifyContent: messages.length === 0 ? "flex-end" : "flex-start",
           }}
         >
           {messages.length === 0 && (
@@ -319,45 +312,63 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               <Typography
                 variant="h4"
                 sx={{
-                  fontSize: { xs: 24, sm: 30 },
+                  fontSize: 18,
                   lineHeight: 1.15,
                   fontWeight: 700,
-                  letterSpacing: "-0.04em",
-                  color: "#0f172a",
+                  letterSpacing: "-0.02em",
+                  color: "#202833",
                 }}
               >
                 How can I help, user?
               </Typography>
 
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-                {recommendations.map((recommendation) => (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.35 }}>
+                {[...recommendations, ...(showMoreRecommendations ? additionalRecommendations : [])].map((recommendation) => (
                   <Button
                     key={recommendation}
                     variant="outlined"
                     onClick={() => setInputValue(recommendation)}
                     sx={{
-                      borderColor: "rgba(15, 23, 42, 0.08)",
-                      backgroundColor: "#ffffff",
-                      color: "#111827",
-                      borderRadius: 2,
-                      py: 1,
-                      px: 1.5,
+                      color: "#697486",
+                      border: "none",
+                      borderRadius: 1,
+                      py: 0.55,
+                      px: 0,
                       textTransform: "none",
-                      fontWeight: 600,
-                      fontSize: 13,
+                      fontWeight: 400,
+                      fontSize: 14,
                       lineHeight: 1.2,
-                      whiteSpace: "nowrap",
+                      whiteSpace: "normal",
                       justifyContent: "flex-start",
                       minHeight: 0,
                       "&:hover": {
-                        backgroundColor: "#f8fafc",
-                        borderColor: "rgba(15, 23, 42, 0.12)",
+                        backgroundColor: "#f7f8fa",
                       },
                     }}
                   >
+                    <ShowChartIcon sx={{ mr: 1, fontSize: 19, color: "#8591a6" }} />
                     {recommendation}
                   </Button>
                 ))}
+                <Button
+                  onClick={() => setShowMoreRecommendations((current) => !current)}
+                  sx={{
+                    color: "#697486",
+                    borderRadius: 1,
+                    py: 0.55,
+                    px: 0,
+                    textTransform: "none",
+                    fontWeight: 400,
+                    fontSize: 14,
+                    lineHeight: 1.2,
+                    justifyContent: "flex-start",
+                    minHeight: 0,
+                    "&:hover": { backgroundColor: "#f7f8fa" },
+                  }}
+                >
+                  <KeyboardArrowDownIcon sx={{ mr: 1, fontSize: 20, color: "#8591a6", transform: showMoreRecommendations ? "rotate(180deg)" : "none" }} />
+                  {showMoreRecommendations ? "Show less" : "Show more"}
+                </Button>
               </Box>
             </>
           )}
@@ -416,8 +427,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         <Box
           sx={{
             borderTop: "1px solid rgba(15, 23, 42, 0.06)",
-            px: 2,
-            py: 1.5,
+            px: 3,
+            py: 2.25,
             bgcolor: "#ffffff",
             mt: "auto",
           }}
@@ -428,14 +439,15 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               elevation={0}
               sx={{
                 display: "flex",
-                alignItems: "flex-end",
+                alignItems: "flex-start",
                 gap: 1,
-                border: "1px solid rgba(148, 163, 184, 0.25)",
+                position: "relative",
+                border: "1px solid #d8dde5",
                 backgroundColor: "#ffffff",
-                borderRadius: 2,
+                borderRadius: 1.5,
                 px: 1,
-                py: 0.75,
-                minHeight: 90,
+                py: 0,
+                minHeight: 138,
               }}
             >
               <InputBase
@@ -451,14 +463,17 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
                     event.currentTarget.form?.requestSubmit();
                   }
                 }}
-                placeholder="Type your message..."
+                placeholder="Do anything with AI..."
                 inputProps={{ "aria-label": "Message input" }}
                 sx={{
                   fontSize: 15,
                   color: "#0f172a",
-                  alignItems: "flex-end",
-                  minHeight: 72,
-                  py: 0.75,
+                  minHeight: 102,
+                  py: 0,
+                  pl: 1,
+                  "& textarea": {
+                    paddingTop: 0,
+                  },
                   "& input::placeholder": {
                     color: "#64748b",
                     opacity: 1,
@@ -475,14 +490,15 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
                   height: 40,
                   borderRadius: 1.75,
                   alignSelf: "flex-end",
-                  backgroundColor: "#93c5fd",
-                  color: "#0f172a",
+                  mb: 1,
+                  backgroundColor: "#a9c4ff",
+                  color: "#ffffff",
                   "&:hover": {
-                    backgroundColor: "#7dd3fc",
+                    backgroundColor: "#8eaff5",
                   },
                 }}
               >
-                <SendIcon fontSize="small" />
+                <ArrowUpwardIcon fontSize="small" />
               </IconButton>
             </Paper>
           </form>

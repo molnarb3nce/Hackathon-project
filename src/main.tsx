@@ -27,7 +27,7 @@ function App() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #f8fafc, #e2e8f0)",
+          backgroundColor: "#eef0f2",
         }}
       >
         <Button
@@ -36,7 +36,7 @@ function App() {
           sx={{
             px: 3,
             py: 1.5,
-            borderRadius: 999,
+            borderRadius: 1,
             textTransform: "none",
             fontWeight: 700,
           }}
