@@ -1,4 +1,5 @@
 import React, { FormEvent, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import {
   Box,
   Button,
@@ -306,7 +307,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         },
         backdrop: {
           sx: {
-            backgroundColor: "rgba(255, 255, 255, 0.82)",
+            backgroundColor: "transparent",
+            backdropFilter: "none",
           },
         },
       }}
@@ -553,7 +555,19 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
                       lineHeight: 1.5,
                     }}
                   >
-                    {message.text}
+                    <ReactMarkdown
+                      components={{
+                        h2: ({ children }) => (
+                          <Typography component="h2" sx={{ fontSize: 16, fontWeight: 700, mb: 0.75 }}>
+                            {children}
+                          </Typography>
+                        ),
+                        p: ({ children }) => <Box component="p" sx={{ m: 0, mb: 0.75 }}>{children}</Box>,
+                        ul: ({ children }) => <Box component="ul" sx={{ m: 0, pl: 2.5 }}>{children}</Box>,
+                      }}
+                    >
+                      {message.text}
+                    </ReactMarkdown>
                   </Box>
                 </Box>
               ))}
