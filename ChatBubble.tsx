@@ -18,10 +18,12 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 type ChatPosition = "right" | "left";
 type ChatViewMode = "drawer" | "page";
 type ChatMessage = { id: number; text: string; isUser: boolean };
+type StarPosition = { top: string; left: string };
 
 interface ChatBubbleProps {
   isOpen?: boolean;
@@ -55,6 +57,29 @@ const loadingLabels = ["Thinking", "Searching", "Connecting dots", "Summarizing"
 const responseDelayMs = 6000;
 const wordIntervalMs = 75;
 
+const getRandomStarPositions = (): StarPosition[] => {
+  const positions: Array<{ top: number; left: number }> = [];
+
+  while (positions.length < 4) {
+    const candidate = {
+      top: 12 + Math.random() * 72,
+      left: 7 + Math.random() * 86,
+    };
+    const isFarEnough = positions.every((position) =>
+      Math.hypot(candidate.top - position.top, candidate.left - position.left) >= 18,
+    );
+
+    if (isFarEnough) {
+      positions.push(candidate);
+    }
+  }
+
+  return positions.map((position) => ({
+    top: `${position.top}%`,
+    left: `${position.left}%`,
+  }));
+};
+
 export const ChatBubble: React.FC<ChatBubbleProps> = ({
   isOpen = true,
   onClose,
@@ -67,8 +92,6 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   const [position, setPosition] = useState<ChatPosition>(defaultPosition);
   const [isSwitchingSide, setIsSwitchingSide] = useState(false);
   const sideSwitchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sideEntryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isEnteringFromSide, setIsEnteringFromSide] = useState(false);
   const [viewMode, setViewMode] = useState<ChatViewMode>(variant === "page" ? "page" : "drawer");
   const [inputValue, setInputValue] = useState("");
   const [showMoreRecommendations, setShowMoreRecommendations] = useState(false);
@@ -78,6 +101,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showLoadingStatus, setShowLoadingStatus] = useState(false);
   const [loadingLabel, setLoadingLabel] = useState("Thinking");
+  const [starPositions, setStarPositions] = useState<StarPosition[]>(getRandomStarPositions);
 
   const isFullPage = viewMode === "page";
 
@@ -92,9 +116,6 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   useEffect(() => () => {
     if (sideSwitchTimer.current) {
       clearTimeout(sideSwitchTimer.current);
-    }
-    if (sideEntryTimer.current) {
-      clearTimeout(sideEntryTimer.current);
     }
   }, []);
 
@@ -174,6 +195,28 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     };
   }, [pendingResponse]);
 
+  useEffect(() => {
+    if (!isLoading) {
+      return undefined;
+    }
+
+    setStarPositions(getRandomStarPositions());
+    let starInterval: ReturnType<typeof setInterval> | undefined;
+    const starTimer = setTimeout(() => {
+      setStarPositions(getRandomStarPositions());
+      starInterval = setInterval(() => {
+        setStarPositions(getRandomStarPositions());
+      }, 2400);
+    }, 1200);
+
+    return () => {
+      clearTimeout(starTimer);
+      if (starInterval) {
+        clearInterval(starInterval);
+      }
+    };
+  }, [isLoading]);
+
   const togglePosition = () => {
     if (isSwitchingSide) {
       return;
@@ -183,14 +226,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     setDrawerOpen(false);
     sideSwitchTimer.current = setTimeout(() => {
       setPosition((current) => (current === "right" ? "left" : "right"));
-      setIsEnteringFromSide(true);
       setDrawerOpen(true);
       setIsSwitchingSide(false);
       sideSwitchTimer.current = null;
-      sideEntryTimer.current = setTimeout(() => {
-        setIsEnteringFromSide(false);
-        sideEntryTimer.current = null;
-      }, 360);
     }, 240);
   };
 
@@ -209,6 +247,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
 
   return (
     <Drawer
+      key={position}
       anchor={position}
       open={drawerOpen}
       onClose={handleClose}
@@ -229,17 +268,6 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             bgcolor: "#ffffff",
             m: 0,
             transition: "width 320ms cubic-bezier(0.22, 1, 0.36, 1), max-width 320ms cubic-bezier(0.22, 1, 0.36, 1)",
-            animation: isEnteringFromSide
-              ? `${position === "right" ? "drawerEnterFromRight" : "drawerEnterFromLeft"} 360ms cubic-bezier(0.22, 1, 0.36, 1) both`
-              : "none",
-            "@keyframes drawerEnterFromRight": {
-              from: { transform: "translateX(100%)" },
-              to: { transform: "translateX(0)" },
-            },
-            "@keyframes drawerEnterFromLeft": {
-              from: { transform: "translateX(-100%)" },
-              to: { transform: "translateX(0)" },
-            },
           },
         },
         backdrop: {
@@ -257,9 +285,56 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
           display: "flex",
           flexDirection: "column",
           height: "100%",
-          bgcolor: "#ffffff",
+          position: "relative",
+          zIndex: 0,
+          bgcolor: "transparent",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+            background: "linear-gradient(110deg, rgba(192, 132, 252, 0.24) 0%, rgba(255, 255, 255, 0.94) 58%, #ffffff 100%)",
+            opacity: isLoading ? 1 : 0,
+            transition: "opacity 900ms cubic-bezier(0.22, 1, 0.36, 1)",
+          },
         }}
       >
+        <Box
+          aria-hidden="true"
+          sx={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 1,
+            pointerEvents: "none",
+            opacity: isLoading ? 1 : 0,
+            transition: "opacity 900ms cubic-bezier(0.22, 1, 0.36, 1)",
+            "& .thinkingStar": {
+              position: "absolute",
+              color: "#a78bfa",
+              animation: "backgroundSparkle 2.4s ease-in-out infinite",
+              "@keyframes backgroundSparkle": {
+                "0%, 35%, 100%": { opacity: 0.22, transform: "scale(0.75) rotate(-10deg)" },
+                "45%, 55%": { opacity: 0, transform: "scale(0.75) rotate(-10deg)" },
+                "50%": { opacity: 0, transform: "scale(0.75) rotate(-10deg)" },
+                "65%": { opacity: 0.8, transform: "scale(1.15) rotate(10deg)" },
+              },
+            },
+          }}
+        >
+          {starPositions.map((star, index) => (
+            <AutoAwesomeIcon
+              key={index}
+              className="thinkingStar"
+              sx={{
+                top: star.top,
+                left: star.left,
+                fontSize: [21, 14, 16, 11][index],
+                animationDelay: `${index * 550}ms`,
+              }}
+            />
+          ))}
+        </Box>
         <Box
           sx={{
             display: "flex",
@@ -267,7 +342,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             justifyContent: "space-between",
             px: 3,
             py: 2.25,
-            bgcolor: "#ffffff",
+            bgcolor: "transparent",
+            position: "relative",
+            zIndex: 2,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -344,12 +421,14 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             px: 3,
             pt: 2,
             pb: 1.5,
-            bgcolor: "#ffffff",
+            bgcolor: "transparent",
             display: "flex",
             flexDirection: "column",
             gap: 1.25,
             overflow: "auto",
             justifyContent: messages.length === 0 ? "flex-end" : "flex-start",
+            position: "relative",
+            zIndex: 2,
           }}
         >
           {messages.length === 0 && (
@@ -434,7 +513,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
                       px: 1.5,
                       py: 1,
                       borderRadius: 2,
-                      backgroundColor: message.isUser ? "#dbeafe" : "#e5e7eb",
+                      backgroundColor: message.isUser ? "#ede9fe" : "#e5e7eb",
                       color: message.isUser ? "#0f172a" : "#111827",
                       fontSize: 14,
                       lineHeight: 1.5,
@@ -445,25 +524,27 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
                 </Box>
               ))}
               {showLoadingStatus && (
-                <Typography
-                  sx={{
-                    color: "#64748b",
-                    fontSize: 13,
-                    fontStyle: "italic",
-                    animation: "chatPulse 1.4s ease-in-out infinite",
-                    "@keyframes chatPulse": {
-                      "0%, 100%": { opacity: 0.42 },
-                      "50%": { opacity: 1 },
-                    },
-                  }}
-                >
-                  {loadingLabel}
-                  <Box component="span" sx={{ display: "inline-block", width: 18, overflow: "hidden", verticalAlign: "bottom" }}>
-                    <Box component="span" sx={{ animation: "chatDots 1.2s steps(4, end) infinite", "@keyframes chatDots": { from: { transform: "translateX(0)" }, to: { transform: "translateX(-12px)" } } }}>
-                      ...
+                <Box sx={{ color: "#8b5cf6" }}>
+                  <Typography
+                    sx={{
+                      color: "inherit",
+                      fontSize: 13,
+                      fontStyle: "italic",
+                      animation: "thinkingPulse 1.4s ease-in-out infinite",
+                      "@keyframes thinkingPulse": {
+                        "0%, 100%": { opacity: 0.42 },
+                        "50%": { opacity: 1 },
+                      },
+                    }}
+                  >
+                    {loadingLabel}
+                    <Box component="span" sx={{ display: "inline-block", width: 18, overflow: "hidden", verticalAlign: "bottom" }}>
+                      <Box component="span" sx={{ animation: "chatDots 1.2s steps(4, end) infinite", "@keyframes chatDots": { from: { transform: "translateX(0)" }, to: { transform: "translateX(-12px)" } } }}>
+                        ...
+                      </Box>
                     </Box>
-                  </Box>
-                </Typography>
+                  </Typography>
+                </Box>
               )}
             </Stack>
           )}
@@ -474,8 +555,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             borderTop: "1px solid rgba(15, 23, 42, 0.06)",
             px: 3,
             py: 2.25,
-            bgcolor: "#ffffff",
+            bgcolor: "transparent",
             mt: "auto",
+            position: "relative",
+            zIndex: 2,
           }}
         >
           <form onSubmit={handleSubmit}>
@@ -536,10 +619,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
                   borderRadius: 1.75,
                   alignSelf: "flex-end",
                   mb: 1,
-                  backgroundColor: "#a9c4ff",
+                  backgroundColor: "#a78bfa",
                   color: "#ffffff",
                   "&:hover": {
-                    backgroundColor: "#8eaff5",
+                    backgroundColor: "#8b5cf6",
                   },
                 }}
               >
