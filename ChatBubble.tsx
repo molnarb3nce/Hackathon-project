@@ -92,6 +92,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   const [position, setPosition] = useState<ChatPosition>(defaultPosition);
   const [isSwitchingSide, setIsSwitchingSide] = useState(false);
   const sideSwitchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sideOpenTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [viewMode, setViewMode] = useState<ChatViewMode>(variant === "page" ? "page" : "drawer");
   const [inputValue, setInputValue] = useState("");
   const [showMoreRecommendations, setShowMoreRecommendations] = useState(false);
@@ -116,6 +117,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   useEffect(() => () => {
     if (sideSwitchTimer.current) {
       clearTimeout(sideSwitchTimer.current);
+    }
+    if (sideOpenTimer.current) {
+      clearTimeout(sideOpenTimer.current);
     }
   }, []);
 
@@ -226,10 +230,13 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     setDrawerOpen(false);
     sideSwitchTimer.current = setTimeout(() => {
       setPosition((current) => (current === "right" ? "left" : "right"));
-      setDrawerOpen(true);
-      setIsSwitchingSide(false);
       sideSwitchTimer.current = null;
-    }, 240);
+      sideOpenTimer.current = setTimeout(() => {
+        setDrawerOpen(true);
+        setIsSwitchingSide(false);
+        sideOpenTimer.current = null;
+      }, 20);
+    }, 260);
   };
 
   const toggleViewMode = () => {
