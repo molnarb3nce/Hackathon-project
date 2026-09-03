@@ -48,10 +48,46 @@ const additionalRecommendations = [
 ];
 
 const demoResponses = [
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Here is a concise summary of the latest activity.",
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. I reviewed the context and matched the relevant details.",
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. The recommended next step is to review the priority queue.",
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. I can turn this into a clear action plan for the team.",
+  `## Weekly activity summary
+
+I found **12 unusual transactions** this week. The main signals were:
+
+- **5** new-device events
+- **4** unusual-location events
+- **3** payments outside the customer's normal hours
+
+### Recommended focus
+Start with the two transactions that combine a new device with a high-value payment. They have the clearest risk signal and should be reviewed first.`,
+  `## Rule performance
+
+The strongest rule was **Velocity - 5 payments in 10 minutes**, which triggered **38 times**.
+
+| Result | Count |
+| --- | ---: |
+| Confirmed legitimate | 31 |
+| Escalated for review | 5 |
+| Confirmed suspicious | 2 |
+
+The high legitimate rate suggests the threshold may be too sensitive. Consider testing a higher payment count or adding a device-risk condition.`,
+  `## Priority review queue
+
+I recommend reviewing the **8 alerts** that include both a new device and a high-value payment.
+
+1. Confirm whether the device is known to the customer.
+2. Compare the payment location with recent account activity.
+3. Check whether the payment amount matches the customer's normal pattern.
+
+These alerts carry the clearest combined risk signal and could reduce manual review time by approximately **20%**.`,
+  `## Related transactions
+
+I grouped the latest activity by **customer**, **device**, and **location**. Three transactions share the same device fingerprint:
+
+- Customer **C-1048** - $1,240.00 in New York
+- Customer **C-2217** - $980.00 in Boston
+- Customer **C-3372** - $1,115.00 in Chicago
+
+### Next step
+The accounts have different customer histories but the same device signal. Link analysis and a device-ownership check should clarify whether this is a shared business device or coordinated activity.`,
 ];
 
 const loadingLabels = ["Thinking", "Searching", "Connecting dots", "Summarizing", "Researching"];
@@ -299,8 +335,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
       slotProps={{
         paper: {
           sx: {
-            width: isFullPage ? "100vw" : { xs: "100vw", sm: 450 },
-            maxWidth: isFullPage ? "100vw" : 450,
+            width: isFullPage ? "100vw" : { xs: "100vw", sm: 420 },
+            maxWidth: isFullPage ? "100vw" : 420,
             height: "100vh",
             top: 0,
             bottom: 0,
@@ -308,7 +344,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             boxShadow: "none",
             border: "none",
             overflow: "hidden",
-            bgcolor: "#ffffff",
+            bgcolor: "#f5f6f8",
             m: 0,
             willChange: "width, max-width",
             transition: "width 480ms cubic-bezier(0.22, 1, 0.36, 1), max-width 480ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -316,12 +352,12 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               ? `${isFullPage ? "drawerExpandToPage" : "drawerCollapseToDrawer"} 480ms cubic-bezier(0.22, 1, 0.36, 1) both`
               : "none",
             "@keyframes drawerExpandToPage": {
-              from: { width: "450px", maxWidth: "450px" },
+              from: { width: "420px", maxWidth: "420px" },
               to: { width: "100vw", maxWidth: "100vw" },
             },
             "@keyframes drawerCollapseToDrawer": {
               from: { width: "100vw", maxWidth: "100vw" },
-              to: { width: "450px", maxWidth: "450px" },
+              to: { width: "420px", maxWidth: "420px" },
             },
           },
         },
@@ -350,7 +386,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             inset: 0,
             zIndex: 0,
             pointerEvents: "none",
-            background: "linear-gradient(110deg, rgba(192, 132, 252, 0.24) 0%, rgba(255, 255, 255, 0.94) 58%, #ffffff 100%)",
+            background: "linear-gradient(110deg, rgba(192, 132, 252, 0.24) 0%, rgba(245, 246, 248, 0.94) 58%, #f5f6f8 100%)",
             opacity: isLoading ? 1 : 0,
             transition: "opacity 900ms cubic-bezier(0.22, 1, 0.36, 1)",
           },
@@ -397,7 +433,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            px: 3,
+              px: 3,
             py: 2.25,
             bgcolor: "transparent",
             position: "relative",
@@ -475,13 +511,13 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         <Box
           sx={{
             flex: 1,
-            px: 3,
+            px: 2,
             pt: 2,
             pb: 1.5,
             bgcolor: "transparent",
             display: "flex",
             flexDirection: "column",
-            gap: 1.25,
+            gap: 0.75,
             overflow: "auto",
             justifyContent: messages.length === 0 ? "flex-end" : "flex-start",
             position: "relative",
@@ -555,7 +591,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
           )}
 
           {messages.length > 0 && (
-            <Stack spacing={1.5} sx={{ mt: 1 }}>
+            <Stack spacing={1} sx={{ mt: 0.75 }}>
               {messages.map((message) => (
                 <Box
                   key={message.id}
@@ -574,17 +610,17 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
                       backgroundColor: message.isUser ? "#ede9fe" : "#e5e7eb",
                       color: message.isUser ? "#0f172a" : "#111827",
                       fontSize: 14,
-                      lineHeight: 1.5,
+                      lineHeight: 1.35,
                     }}
                   >
                     <ReactMarkdown
                       components={{
                         h2: ({ children }) => (
-                          <Typography component="h2" sx={{ fontSize: 16, fontWeight: 700, mb: 0.75 }}>
+                          <Typography component="h2" sx={{ fontSize: 16, fontWeight: 700, mb: 0.5 }}>
                             {children}
                           </Typography>
                         ),
-                        p: ({ children }) => <Box component="p" sx={{ m: 0, mb: 0.75 }}>{children}</Box>,
+                        p: ({ children }) => <Box component="p" sx={{ m: 0, mb: 0.5 }}>{children}</Box>,
                         ul: ({ children }) => <Box component="ul" sx={{ m: 0, pl: 2.5 }}>{children}</Box>,
                       }}
                     >
